@@ -2,15 +2,107 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mermaid Slaughterhouse</title>
+  <meta name="description" content="Mermaid Slaughterhouse — Make Fish Leather Fine Art Again. An art collective elevating traditional materials like fish leather into contemporary fine art with digital tools." />
+
+  <!-- Fonts: Metal Mania (title, heavy‑metal vibe) + Inter (body) -->
+  <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
   <style>
-    body{font:16px/1.5 system-ui, sans-serif; margin:40px; max-width:720px}
-    h1{margin:0 0 0.4em}
+    :root{ --bg:#0b0b0b; --fg:#f3f3f3; --muted:#c9c9c9; --accent:#ff3b3b; }
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0; color:var(--fg); background:var(--bg);
+      font:16px/1.7 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      display:flex; flex-direction:column; min-height:100dvh;
+    }
+    .container{ width:100%; max-width:980px; margin:0 auto; padding:24px }
+
+    header{ padding:10vh 0 5vh; text-align:center }
+    h1{ font-family:'Metal Mania', cursive; font-size:clamp(42px,7vw,92px); margin:0 0 8px; letter-spacing:0.5px; color:var(--accent) }
+    .tagline{ font-weight:600; color:var(--accent); font-size:clamp(16px,2.4vw,22px); margin:0 0 22px }
+    .lead{ max-width:820px; margin:0 auto; color:var(--muted); font-size:clamp(15px,2vw,18px) }
+
+    section{ padding:40px 0 }
+    .section-title{ font-weight:700; font-size:20px; margin:0 16px 16px; text-align:center }
+
+    /* Instagram grid */
+    .ig-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-width:980px; margin:0 auto; padding:0 24px }
+    .ig-card{ position:relative; aspect-ratio:1/1; overflow:hidden; border-radius:12px; background:#111; }
+    .ig-card img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform .2s ease }
+    .ig-card:hover img{ transform:scale(1.03) }
+    .ig-cap{ position:absolute; inset:auto 0 0 0; background:linear-gradient(transparent, rgba(0,0,0,.7)); color:#fff; font-size:12px; padding:8px 10px; max-height:46%; overflow:hidden; opacity:0; transition:opacity .2s ease }
+    .ig-card:hover .ig-cap{ opacity:1 }
+
+    .center{ text-align:center }
+    .muted{ color:var(--muted) }
+
+    footer{ margin-top:auto; border-top:1px solid #1e1e1e }
+    .footer-inner{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:center; padding:20px; color:var(--muted) }
+    a{ color:var(--fg); text-decoration:none; border-bottom:1px solid transparent }
+    a:hover{ border-bottom-color:var(--fg) }
+
+    @media (max-width: 800px){ .ig-grid{ grid-template-columns:repeat(2,1fr) } }
+    @media (max-width: 520px){ .ig-grid{ grid-template-columns:1fr } }
   </style>
 </head>
 <body>
-  <h1>Mermaid Slaughterhouse</h1>
-  <p>Coming soon, watch this space🎉</p>
+  <header class="container">
+    <h1>Mermaid Slaughterhouse</h1>
+    <p class="tagline">Make Fish Leather Fine Art Again</p>
+    <p class="lead">
+      Mermaid Slaughterhouse is an art collective breaking stereotypes around womanhood and traditional handwork. We work with natural materials like fish leather and willow, reimagined with digital tools (from vector design to laser‑cutting) in contemporary contexts. We unapologetically lift craft materials into high culture while exploring the communal side of making. Ground‑level feminism and ecology guide the work — the personal is political.
+    </p>
+  </header>
+
+  <section class="container">
+    <h2 class="section-title">Instagram</h2>
+    <div id="ig" class="ig-grid" aria-live="polite"></div>
+    <p id="ig-status" class="center muted" style="margin-top:10px">Loading latest posts…</p>
+    <p class="center muted" style="margin-top:8px">Follow us on <a href="https://www.instagram.com/mermaid.slaughterhouse/" target="_blank" rel="noopener">Instagram</a></p>
+    <noscript>
+      <p class="center muted">Enable JavaScript to view the Instagram feed.</p>
+    </noscript>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <span>Contact:</span>
+      <a href="mailto:info@mermaidslaughterhouse.com">info@mermaidslaughterhouse.com</a>
+    </div>
+  </footer>
+
+  <script>
+    // Update the username if needed; the Worker route must be configured at Cloudflare as: mermaidslaughterhouse.com/api/ig*
+    const USERNAME = 'mermaid.slaughterhouse';
+    const API_URL = `/api/ig?u=${encodeURIComponent(USERNAME)}&limit=9`;
+
+    async function loadIG(){
+      const grid = document.getElementById('ig');
+      const status = document.getElementById('ig-status');
+      try{
+        const res = await fetch(API_URL, { headers: { 'Accept': 'application/json' }});
+        if(!res.ok) throw new Error('Feed unavailable');
+        const data = await res.json();
+        grid.innerHTML = '';
+        (data.posts || []).forEach(p => {
+          const a = document.createElement('a');
+          a.href = `https://www.instagram.com/p/${p.shortcode}/`;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.className = 'ig-card';
+          const img = (p.thumbnail || '').replace(/\\u0026/g, '&');
+          a.innerHTML = `<img alt="" loading="lazy" src="${img}"/><span class=\"ig-cap\">${(p.caption||'').slice(0,120)}</span>`;
+          grid.appendChild(a);
+        });
+        status.textContent = (data.posts && data.posts.length) ? '' : 'No posts yet.';
+      } catch(e){
+        status.textContent = 'Could not load Instagram right now.';
+      }
+    }
+    loadIG();
+  </script>
 </body>
 </html>
