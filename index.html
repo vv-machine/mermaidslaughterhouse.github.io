@@ -6,7 +6,7 @@
   <title>Mermaid Slaughterhouse - Make Fish Leather Fine Art Again</title>
   <meta name="description" content="Mermaid Slaughterhouse — Make Fish Leather Fine Art Again. An art collective elevating traditional materials like fish leather into contemporary fine art with digital tools." />
 
-  <!-- Fonts: Metal Mania (title, heavy‑metal vibe) + Inter (body) -->
+  <!-- Fonts: Metal Mania (title, heavy-metal vibe) + Inter (body) -->
   <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
@@ -53,7 +53,7 @@
     <h1>Mermaid Slaughterhouse</h1>
     <p class="tagline">Make Fish Leather Fine Art Again</p>
     <p class="lead">
-      Mermaid Slaughterhouse is an art collective breaking stereotypes around womanhood and traditional handwork. We work with natural materials like fish leather and willow, reimagined with digital tools (from vector design to laser‑cutting) in contemporary contexts. We unapologetically lift craft materials into high culture while exploring the communal side of making. Ground‑level feminism and ecology guide the work — the personal is political.
+      Mermaid Slaughterhouse is an art collective breaking stereotypes around womanhood and traditional handwork. We work with natural materials like fish leather and willow, reimagined with digital tools (from vector design to laser-cutting) in contemporary contexts. We unapologetically lift craft materials into high culture while exploring the communal side of making. Ground-level feminism and ecology guide the work — the personal is political.
     </p>
   </header>
 
@@ -75,7 +75,7 @@
   </footer>
 
   <script>
-    // Update the username if needed; the Worker route must be configured at Cloudflare as: mermaidslaughterhouse.com/api/ig*
+    // Must have a Cloudflare Worker route: mermaidslaughterhouse.com/api/ig*
     const USERNAME = 'mermaid.slaughterhouse';
     const API_URL = `/api/ig?u=${encodeURIComponent(USERNAME)}&limit=9`;
 
@@ -84,8 +84,9 @@
       const status = document.getElementById('ig-status');
       try{
         const res = await fetch(API_URL, { headers: { 'Accept': 'application/json' }});
-        if(!res.ok) throw new Error('Feed unavailable');
+        if(!res.ok) throw new Error('Feed unavailable: ' + res.status);
         const data = await res.json();
+
         grid.innerHTML = '';
         (data.posts || []).forEach(p => {
           const a = document.createElement('a');
@@ -93,12 +94,26 @@
           a.target = '_blank';
           a.rel = 'noopener';
           a.className = 'ig-card';
-          const img = (p.thumbnail || '').replace(/\\u0026/g, '&');
-          a.innerHTML = `<img alt="" loading="lazy" src="${img}"/><span class=\"ig-cap\">${(p.caption||'').slice(0,120)}</span>`;
+
+          const img = document.createElement('img');
+          img.loading = 'lazy';
+          img.alt = '';
+          img.src = p.thumbnail;          // uses proxied /api/ig/img?src=...
+          img.onerror = () => { a.style.display = 'none'; };
+
+          a.appendChild(img);
+
+          const cap = document.createElement('span');
+          cap.className = 'ig-cap';
+          cap.textContent = (p.caption || '').slice(0, 120);
+          a.appendChild(cap);
+
           grid.appendChild(a);
         });
+
         status.textContent = (data.posts && data.posts.length) ? '' : 'No posts yet.';
       } catch(e){
+        console.error('IG load failed:', e);
         status.textContent = 'Could not load Instagram right now.';
       }
     }
